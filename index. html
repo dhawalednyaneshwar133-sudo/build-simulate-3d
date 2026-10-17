@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build & Simulate 3D</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: white;
+      text-align: center;
+    }
+    header {
+      padding: 30px 15px;
+      background: #172554;
+    }
+    h1 { color: #60a5fa; }
+    p { color: #d1d5db; }
+    .panel {
+      margin: 25px auto;
+      padding: 25px;
+      max-width: 600px;
+      background: #1e293b;
+      border-radius: 15px;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 8px;
+      border: 0;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+    #model {
+      width: 130px;
+      height: 130px;
+      margin: 35px auto;
+      background: #22d3ee;
+      border: 3px solid white;
+      transform: rotate(20deg);
+      transition: transform 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Build & Simulate 3D</h1>
+    <p>Explore, Build and Simulate Your Ideas</p>
+  </header>
+
+  <div class="panel">
+    <h2>3D Model Simulator</h2>
+    <p>Rotate and explore your model.</p>
+    <div id="model"></div>
+    <button onclick="rotateModel()">Rotate Model</button>
+    <button onclick="changeColor()">Change Color</button>
+  </div>
+
+  <footer>
+    <p>Build & Simulate 3D | Learning Prototype</p>
+  </footer>
+
+  <script>
+    let angle = 20;
+    let colors = ["#22d3ee", "#4ade80", "#f472b6", "#facc15"];
+    let index = 0;
+
+    function rotateModel() {
+      angle += 45;
+      document.getElementById("model").style.transform =
+        rotate(${angle}deg);
+    }
+
+    function changeColor() {
+      index = (index + 1) % colors.length;
+      document.getElementById("model").style.background =
+        colors[index];
+    }
+  </script>
+</body>
+</html>
