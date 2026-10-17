@@ -1,84 +1,286 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Build & Simulate 3D</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: white;
-      text-align: center;
-    }
-    header {
-      padding: 30px 15px;
-      background: #172554;
-    }
-    h1 { color: #60a5fa; }
-    p { color: #d1d5db; }
-    .panel {
-      margin: 25px auto;
-      padding: 25px;
-      max-width: 600px;
-      background: #1e293b;
-      border-radius: 15px;
-    }
-    button {
-      padding: 12px 20px;
-      margin: 8px;
-      border: 0;
-      border-radius: 8px;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-    #model {
-      width: 130px;
-      height: 130px;
-      margin: 35px auto;
-      background: #22d3ee;
-      border: 3px solid white;
-      transform: rotate(20deg);
-      transition: transform 0.5s;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build & Simulate 3D</title>
+<style>
+:root{--bg:#08111f;--panel:#111e31;--panel2:#17263d;--line:#2b3d58;--text:#eaf2ff;--muted:#a9bad2;--blue:#4f8cff;--cyan:#37d6e8;--green:#43d39e;--orange:#ffb454}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 50% -20%,#1a3760 0,var(--bg) 50%);color:var(--text)}
+header{padding:24px clamp(16px,4vw,48px);border-bottom:1px solid var(--line);background:#0a1526dd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;font-weight:900;color:#07111f;font-size:20px}
+h1{font-size:clamp(22px,3vw,32px);margin:0;color:#fff}.tagline{margin:5px 0 0;color:var(--muted);font-size:14px}
+main{max-width:1450px;margin:auto;padding:24px clamp(12px,3vw,32px) 42px}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.topline h2{margin:0;font-size:22px}.status{color:var(--green);font-size:13px}
+.layout{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:18px;align-items:start}
+.panel{background:linear-gradient(180deg,#14233a,#0f1b2d);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 12px 30px #0002}
+.panel h3{margin:0 0 14px;font-size:16px}.control-group{padding:13px 0;border-top:1px solid #263852}.control-group:first-of-type{border-top:0;padding-top:0}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
+select,input[type=number],input[type=text]{width:100%;padding:10px 11px;border-radius:9px;border:1px solid #334965;background:#091525;color:var(--text);outline:none}
+input[type=range]{width:100%;accent-color:var(--cyan)}.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+button,.file-label{border:0;border-radius:9px;padding:10px 12px;font-weight:700;background:#263b58;color:var(--text);cursor:pointer;transition:.18s;display:inline-flex;justify-content:center;align-items:center;gap:6px;font-size:13px}
+button:hover,.file-label:hover{filter:brightness(1.15);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#3b76ef,#2c5bd0)}button.good{background:#146c56}button.warn{background:#7b4b16}button.full{width:100%;margin-top:8px}
+button:focus-visible,.file-label:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.viewer-panel{padding:0;overflow:hidden}.viewer-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}.viewer-head h3{margin:0}.viewer-actions{display:flex;gap:7px;flex-wrap:wrap}
+.scene-wrap{position:relative;min-height:440px;overflow:hidden;background:radial-gradient(ellipse at center,#1b3452 0,#0a1423 70%);perspective:1000px;touch-action:pan-y}
+.grid-floor{position:absolute;inset:45% -30% -45%;background-image:linear-gradient(#29415b55 1px,transparent 1px),linear-gradient(90deg,#29415b55 1px,transparent 1px);background-size:36px 36px;transform:rotateX(68deg);transform-origin:top center;opacity:.8}
+.scene{position:absolute;inset:0;display:grid;place-items:center;transform-style:preserve-3d;cursor:grab;user-select:none}.scene:active{cursor:grabbing}
+.model-root{position:relative;transform-style:preserve-3d;transition:transform .18s linear;min-width:180px;min-height:180px;display:grid;place-items:center}
+.shape-cube{width:120px;height:120px;position:relative;transform-style:preserve-3d;animation:none}
+.face{position:absolute;width:120px;height:120px;border:2px solid #e5f8ff99;background:#37d6e8aa;box-shadow:inset 0 0 28px #ffffff22}
+.face.front{transform:translateZ(60px)}.face.back{transform:rotateY(180deg) translateZ(60px)}.face.right{transform:rotateY(90deg) translateZ(60px);background:#4f8cffbb}.face.left{transform:rotateY(-90deg) translateZ(60px);background:#8b5cf6aa}.face.top{transform:rotateX(90deg) translateZ(60px);background:#65e7d4bb}.face.bottom{transform:rotateX(-90deg) translateZ(60px);background:#2563ebbb}
+.shape-sphere{width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 28% 25%,#fff,#45d6e9 18%,#2684d8 55%,#122e68 100%);box-shadow:inset -14px -12px 25px #06132caa,0 0 25px #37d6e844}
+.shape-cylinder{width:110px;height:135px;border-radius:50% / 13%;background:linear-gradient(90deg,#1c66b5,#55e0e8 35%,#1686bb 70%,#0e3d75);border:2px solid #a8f8ff;box-shadow:inset 10px 0 20px #fff3}
+.shape-cone{width:0;height:0;border-left:70px solid transparent;border-right:70px solid transparent;border-bottom:145px solid #4f8cff;filter:drop-shadow(0 0 12px #4f8cff66)}
+.model-parts{position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d}
+.extra-part{position:absolute;width:42px;height:42px;border:2px solid #fff9;border-radius:8px;background:#f59e0bbb;box-shadow:0 0 16px #f59e0b55;transform-style:preserve-3d}
+.motorcycle{width:min(560px,90vw);height:300px;overflow:visible;filter:drop-shadow(0 14px 18px #0007)}
+.motorcycle svg{width:100%;height:100%;overflow:visible}
+.wheel{transform-box:fill-box;transform-origin:center;transition:transform .15s}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px 18px;border-top:1px solid var(--line)}
+.metric{padding:12px;background:#0b1728;border:1px solid #253953;border-radius:10px}.metric small{color:var(--muted);display:block;font-size:11px}.metric strong{display:block;font-size:18px;margin-top:4px}
+.lower-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.parts-list{display:flex;flex-wrap:wrap;gap:8px}.parts-list span{font-size:12px;border:1px solid #334963;background:#0a1728;padding:7px 9px;border-radius:8px;color:#d8e8ff}
+.note{color:var(--muted);font-size:12px;line-height:1.55}.measurements{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.measure{background:#0a1728;border:1px solid #273b55;padding:11px;border-radius:10px}.measure span{font-size:11px;color:var(--muted);display:block}.measure b{font-size:15px;display:block;margin-top:5px}
+footer{text-align:center;padding:22px;color:#8295af;border-top:1px solid var(--line);font-size:12px}
+.hidden{display:none!important}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.scene-wrap{min-height:370px}.lower-grid{grid-template-columns:1fr}}
+@media(max-width:520px){header{position:static}.metrics{grid-template-columns:repeat(2,1fr)}.scene-wrap{min-height:320px}.panel{padding:14px}.measurements{grid-template-columns:1fr 1fr}.viewer-head{align-items:flex-start}}
+</style>
 </head>
 <body>
-  <header>
-    <h1>Build & Simulate 3D</h1>
-    <p>Explore, Build and Simulate Your Ideas</p>
-  </header>
-
-  <div class="panel">
-    <h2>3D Model Simulator</h2>
-    <p>Rotate and explore your model.</p>
-    <div id="model"></div>
-    <button onclick="rotateModel()">Rotate Model</button>
-    <button onclick="changeColor()">Change Color</button>
+<header>
+  <div class="brand"><div class="logo">3D</div><div><h1>Build &amp; Simulate 3D</h1><p class="tagline">Build models · Connect parts · Explore motion</p></div></div>
+</header>
+<main>
+  <div class="topline"><h2>3D Workshop</h2><span class="status" id="status" role="status">● Ready to build</span></div>
+  <div class="layout">
+    <aside class="panel">
+      <h3>🧰 Model Builder</h3>
+      <div class="control-group">
+        <label for="modelType">Model type</label>
+        <select id="modelType"><option value="cube">Cube</option><option value="sphere">Sphere</option><option value="cylinder">Cylinder</option><option value="cone">Cone</option><option value="motorcycle">Motorcycle model</option></select>
+        <div class="row"><button class="primary" id="buildBtn">Build model</button><button id="resetBtn">Reset</button></div>
+      </div>
+      <div class="control-group">
+        <label>Attach a part</label>
+        <div class="row"><button id="addBlock">＋ Block</button><button id="addWheel">＋ Wheel</button></div>
+        <div class="row"><button id="addEngine">＋ Engine</button><button id="addGear">＋ Gear</button></div>
+        <button class="full" id="clearParts">Remove added parts</button>
+      </div>
+      <div class="control-group">
+        <label for="rotateX">Rotate X <span id="rxValue">-15°</span></label><input id="rotateX" type="range" min="-180" max="180" value="-15">
+        <label for="rotateY">Rotate Y <span id="ryValue">25°</span></label><input id="rotateY" type="range" min="-180" max="180" value="25">
+        <label for="zoom">Zoom <span id="zoomValue">100%</span></label><input id="zoom" type="range" min="50" max="160" value="100">
+        <button class="full" id="spinBtn">▶️ Auto rotate: Off</button>
+      </div>
+      <div class="control-group">
+        <h3>📏 Measurements</h3>
+        <div class="row"><div><label for="length">Length (cm)</label><input id="length" type="number" min="1" max="1000" value="120"></div><div><label for="width">Width (cm)</label><input id="width" type="number" min="1" max="1000" value="60"></div></div>
+        <label for="height">Height (cm)</label><input id="height" type="number" min="1" max="1000" value="80">
+        <p class="note">These are editable prototype dimensions, not engineering-certified measurements.</p>
+      </div>
+      <div class="control-group">
+        <h3>⚙️ Engine &amp; Gear Simulation</h3>
+        <label for="rpm">Engine speed (RPM): <b id="rpmValue">3000</b></label><input id="rpm" type="range" min="800" max="10000" step="100" value="3000">
+        <label for="gear">Gear</label><select id="gear"><option value="1">1st gear</option><option value="2">2nd gear</option><option value="3" selected>3rd gear</option><option value="4">4th gear</option><option value="5">5th gear</option><option value="6">6th gear</option></select>
+        <button class="full good" id="engineBtn">▶️ Start engine</button>
+        <p class="note">Speed is an illustrative estimate based on RPM and selected gear; this is not a real vehicle powertrain simulation.</p>
+      </div>
+      <div class="control-group">
+        <h3>💾 Project</h3>
+        <button class="full primary" id="saveBtn">Save project in this browser</button>
+        <div class="row"><button id="downloadBtn">Download project</button><label class="file-label" for="loadFile">Load project</label><input class="hidden" id="loadFile" type="file" accept=".json,application/json"></div>
+        <button class="full" id="exportSvgBtn">Download viewer as SVG</button>
+      </div>
+    </aside>
+    <section>
+      <div class="panel viewer-panel">
+        <div class="viewer-head"><h3>🔭 3D Viewer</h3><div class="viewer-actions"><button id="rotateBtn">Rotate 45°</button><button id="colorBtn">Change color</button></div></div>
+        <div class="scene-wrap" id="sceneWrap">
+          <div class="grid-floor"></div>
+          <div class="scene" id="scene" aria-label="Interactive 3D model viewer">
+            <div class="model-root" id="modelRoot">
+              <div id="shape" class="shape-cube"><div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom"></div></div>
+              <div class="model-parts" id="modelParts"></div>
+            </div>
+            <div class="motorcycle hidden" id="motorcycle">
+              <svg viewBox="0 0 600 320" role="img" aria-label="Illustration of a motorcycle model">
+                <defs><linearGradient id="tank" x1="0" x2="1"><stop stop-color="#1d4ed8"/><stop offset=".5" stop-color="#38bdf8"/><stop offset="1" stop-color="#1e40af"/></linearGradient><linearGradient id="metal" x1="0" x2="1"><stop stop-color="#64748b"/><stop offset=".5" stop-color="#e2e8f0"/><stop offset="1" stop-color="#475569"/></linearGradient></defs>
+                <ellipse cx="300" cy="260" rx="220" ry="16" fill="#020817" opacity=".5"/>
+                <g class="wheel" id="wheelRear"><circle cx="145" cy="218" r="66" fill="#070d16" stroke="#64748b" stroke-width="8"/><circle cx="145" cy="218" r="45" fill="#26384d" stroke="#a8bbd0" stroke-width="5"/><circle cx="145" cy="218" r="10" fill="#dbeafe"/><g stroke="#9fb1c7" stroke-width="3"><path d="M145 173V263M100 218H190M113 186L177 250M177 186L113 250"/></g></g>
+                <g class="wheel" id="wheelFront"><circle cx="455" cy="218" r="66" fill="#070d16" stroke="#64748b" stroke-width="8"/><circle cx="455" cy="218" r="45" fill="#26384d" stroke="#a8bbd0" stroke-width="5"/><circle cx="455" cy="218" r="10" fill="#dbeafe"/><g stroke="#9fb1c7" stroke-width="3"><path d="M455 173V263M410 218H500M423 186L487 250M487 186L423 250"/></g></g>
+                <path d="M145 218L250 153L333 215L455 218L390 110L353 104" fill="none" stroke="url(#metal)" stroke-width="14" stroke-linejoin="round"/>
+                <path d="M248 153L300 210L352 208" fill="none" stroke="#f97316" stroke-width="10"/>
+                <path d="M245 150Q250 110 304 111L359 124Q375 137 355 159L291 172Z" fill="url(#tank)" stroke="#93c5fd" stroke-width="3"/>
+                <path d="M236 107L326 103L347 119L249 126Z" fill="#111827" stroke="#64748b" stroke-width="5"/>
+                <path d="M333 215L355 159L390 110L421 115" fill="none" stroke="#94a3b8" stroke-width="8"/>
+                <path d="M385 110L416 76L451 77" fill="none" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+                <path d="M420 75L442 64" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+                <path d="M388 107L421 104L437 115L418 128Z" fill="#f8fafc" stroke="#64748b" stroke-width="3"/>
+                <path d="M213 118L183 104L151 105" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round"/>
+                <path d="M150 105L137 92" stroke="#94a3b8" stroke-width="7" stroke-linecap="round"/>
+                <rect x="278" y="177" width="73" height="46" rx="9" fill="#64748b" stroke="#cbd5e1" stroke-width="4"/>
+                <path d="M288 185L338 185M288 196L338 196M288 207L338 207" stroke="#1e293b" stroke-width="5"/>
+                <circle cx="320" cy="200" r="15" fill="#1e293b" stroke="#cbd5e1" stroke-width="4"/><circle cx="320" cy="200" r="5" fill="#fbbf24"/>
+                <path d="M153 143L221 151L243 176L217 192L175 174Z" fill="#334155" stroke="#94a3b8" stroke-width="4"/>
+                <path d="M165 139L224 139L239 151L183 158Z" fill="#0f172a"/>
+                <path d="M365 145L388 149L402 163" fill="none" stroke="#f97316" stroke-width="7"/>
+                <path d="M383 231L410 231L427 241" fill="none" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+                <path d="M174 235L206 235L222 245" fill="none" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+                <text x="300" y="295" fill="#9fb4d1" text-anchor="middle" font-size="13">MOTORCYCLE CONCEPT MODEL</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><small>Estimated speed</small><strong id="speedMetric">0 km/h</strong></div>
+          <div class="metric"><small>Engine</small><strong id="engineMetric">Stopped</strong></div>
+          <div class="metric"><small>Parts attached</small><strong id="partsMetric">0</strong></div>
+          <div class="metric"><small>Model size</small><strong id="sizeMetric">120×60×80</strong></div>
+        </div>
+      </div>
+      <div class="lower-grid">
+        <div class="panel"><h3>🧩 Attached Parts</h3><div class="parts-list" id="partsList"><span>No extra parts yet</span></div><p class="note">Use the Attach a part buttons to add visual prototype parts. This demo is a learning model, not a CAD assembly solver.</p></div>
+        <div class="panel"><h3>📐 Dimension Summary</h3><div class="measurements"><div class="measure"><span>Length</span><b id="mLength">120 cm</b></div><div class="measure"><span>Width</span><b id="mWidth">60 cm</b></div><div class="measure"><span>Height</span><b id="mHeight">80 cm</b></div></div><p class="note">Save your project to keep the selected model, dimensions, parts and simulation settings in a JSON file.</p></div>
+      </div>
+    </section>
   </div>
+</main>
+<footer>Build &amp; Simulate 3D · Interactive learning prototype · Runs in your browser</footer>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const colors = ['#37d6e8','#4ade80','#f472b6','#facc15','#a78bfa','#fb923c'];
+  let colorIndex = 0, angleX = -15, angleY = 25, zoom = 100, autoRotate = false, engineOn = false;
+  let parts = [], nextPartId = 1, modelType = 'cube', animationId = null, lastFrame = 0, wheelAngle = 0;
+  const shape = $('shape'), root = $('modelRoot'), motorcycle = $('motorcycle'), modelParts = $('modelParts');
+  const status = msg => $('status').textContent = '● ' + msg;
+  const clampNum = (value, min, max, fallback) => { const n = Number(value); return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback; };
 
-  <footer>
-    <p>Build & Simulate 3D | Learning Prototype</p>
-  </footer>
-
-  <script>
-    let angle = 20;
-    let colors = ["#22d3ee", "#4ade80", "#f472b6", "#facc15"];
-    let index = 0;
-
-    function rotateModel() {
-      angle += 45;
-      document.getElementById("model").style.transform =
-        rotate(${angle}deg);
+  function renderModel() {
+    modelType = $('modelType').value;
+    shape.className = 'hidden';
+    motorcycle.classList.add('hidden');
+    if (modelType === 'motorcycle') {
+      motorcycle.classList.remove('hidden');
+    } else {
+      shape.className = 'shape-' + modelType;
+      shape.style.background = '';
+      if (modelType === 'cube') {
+        shape.innerHTML = '<div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom"></div>';
+      } else { shape.innerHTML = ''; }
+      if (modelType === 'cube') shape.querySelectorAll('.face').forEach(face => face.style.backgroundColor = colors[colorIndex] + 'aa');
+      if (modelType === 'sphere') shape.style.background = radial-gradient(circle at 28% 25%,#fff,${colors[colorIndex]} 22%,#1e40af 100%);
+      if (modelType === 'cylinder') shape.style.background = linear-gradient(90deg,#1c66b5,${colors[colorIndex]} 35%,#1686bb 70%,#0e3d75);
+      if (modelType === 'cone') shape.style.borderBottomColor = colors[colorIndex];
     }
-
-    function changeColor() {
-      index = (index + 1) % colors.length;
-      document.getElementById("model").style.background =
-        colors[index];
-    }
-  </script>
+    renderParts(); updateRotation(); updateMetrics(); status('Model updated');
+  }
+  function updateRotation() {
+    root.style.transform = rotateX(${angleX}deg) rotateY(${angleY}deg) scale(${zoom/100});
+    motorcycle.style.transform = rotateX(${angleX}deg) rotateY(${angleY}deg) scale(${zoom/100});
+    $('rotateX').value = angleX; $('rotateY').value = angleY; $('zoom').value = zoom;
+    $('rxValue').textContent = angleX + '°'; $('ryValue').textContent = angleY + '°'; $('zoomValue').textContent = zoom + '%';
+  }
+  function renderParts() {
+    modelParts.innerHTML = '';
+    parts.forEach((part, i) => {
+      const el = document.createElement('div');
+      el.className = 'extra-part';
+      el.title = part.name;
+      el.textContent = part.kind === 'wheel' ? '◉' : part.kind === 'engine' ? '⚙️' : part.kind === 'gear' ? '⚙️' : '▦';
+      el.style.display = 'grid'; el.style.placeItems = 'center'; el.style.fontSize = '24px';
+      el.style.background = part.kind === 'engine' ? '#64748bee' : part.kind === 'gear' ? '#f59e0bee' : part.kind === 'wheel' ? '#26384dee' : colors[(i+colorIndex)%colors.length] + 'dd';
+      el.style.transform = translate3d(${((i%3)-1)*55}px,${(Math.floor(i/3)%3-1)*52}px,${(i%4)*35+35}px) rotateY(${i*35}deg);
+      modelParts.appendChild(el);
+    });
+    $('partsMetric').textContent = parts.length;
+    $('partsList').innerHTML = '';
+    if (!parts.length) { const span = document.createElement('span'); span.textContent = 'No extra parts yet'; $('partsList').appendChild(span); }
+    parts.forEach((part, i) => {
+      const span = document.createElement('span');
+      span.textContent = part.name + ' ';
+      const remove = document.createElement('button'); remove.textContent = '×'; remove.setAttribute('aria-label','Remove '+part.name); remove.style.padding='2px 6px'; remove.style.marginLeft='5px';
+      remove.addEventListener('click', () => { parts.splice(i,1); renderParts(); status('Part removed'); });
+      span.appendChild(remove); $('partsList').appendChild(span);
+    });
+  }
+  function updateMetrics() {
+    const l = clampNum($('length').value,1,1000,120), w = clampNum($('width').value,1,1000,60), h = clampNum($('height').value,1,1000,80);
+    $('sizeMetric').textContent = ${l}×${w}×${h};
+    $('mLength').textContent = l + ' cm'; $('mWidth').textContent = w + ' cm'; $('mHeight').textContent = h + ' cm';
+    $('rpmValue').textContent = $('rpm').value;
+    const gear = Number($('gear').value), rpm = Number($('rpm').value);
+    const estimated = engineOn ? Math.round(rpm * gear * 0.006) : 0;
+    $('speedMetric').textContent = estimated + ' km/h';
+    $('engineMetric').textContent = engineOn ? 'Running' : 'Stopped';
+    $('engineBtn').textContent = engineOn ? '■ Stop engine' : '▶️ Start engine';
+  }
+  function addPart(kind) {
+    const names = {block:'Block',wheel:'Wheel',engine:'Engine',gear:'Gear'};
+    parts.push({id:nextPartId++,kind,name:names[kind]+' '+(parts.filter(p=>p.kind===kind).length+1)});
+    renderParts(); status(names[kind]+' attached');
+  }
+  function projectData() {
+    return {app:'Build & Simulate 3D',version:1,modelType,angleX,angleY,zoom,colorIndex,parts,
+      dimensions:{length:clampNum($('length').value,1,1000,120),width:clampNum($('width').value,1,1000,60),height:clampNum($('height').value,1,1000,80)},
+      simulation:{rpm:Number($('rpm').value),gear:Number($('gear').value),engineOn}};
+  }
+  function loadProject(data) {
+    if (!data || typeof data !== 'object' || !data.dimensions || !Array.isArray(data.parts)) throw new Error('Invalid project file');
+    modelType = ['cube','sphere','cylinder','cone','motorcycle'].includes(data.modelType) ? data.modelType : 'cube';
+    $('modelType').value = modelType;
+    angleX = clampNum(data.angleX,-180,180,-15); angleY = clampNum(data.angleY,-180,180,25); zoom = clampNum(data.zoom,50,160,100);
+    colorIndex = clampNum(data.colorIndex,0,colors.length-1,0);
+    parts = data.parts.filter(p => p && ['block','wheel','engine','gear'].includes(p.kind)).map((p,i)=>({id:Number(p.id)||i+1,kind:p.kind,name:String(p.name||p.kind)}));
+    nextPartId = Math.max(0,...parts.map(p=>p.id))+1;
+    $('length').value = clampNum(data.dimensions.length,1,1000,120);
+    $('width').value = clampNum(data.dimensions.width,1,1000,60);
+    $('height').value = clampNum(data.dimensions.height,1,1000,80);
+    if(data.simulation){$('rpm').value=clampNum(data.simulation.rpm,800,10000,3000);$('gear').value=String(clampNum(data.simulation.gear,1,6,3));engineOn=!!data.simulation.engineOn;}
+    renderModel(); updateMetrics(); status('Project loaded');
+  }
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function downloadProject() {
+    downloadBlob(new Blob([JSON.stringify(projectData(),null,2)],{type:'application/json'}),'build-simulate-3d-project.json');
+    status('Project downloaded');
+  }
+  function exportSvg() {
+    const isBike = modelType === 'motorcycle';
+    const content = isBike
+      ? <rect width="600" height="320" fill="#0a1423"/><text x="300" y="35" fill="#fff" font-size="20" text-anchor="middle">Motorcycle Concept Model</text><circle cx="145" cy="210" r="60" fill="#26384d" stroke="#a8bbd0" stroke-width="8"/><circle cx="455" cy="210" r="60" fill="#26384d" stroke="#a8bbd0" stroke-width="8"/><path d="M145 210L250 145L333 207L455 210L390 102" fill="none" stroke="#cbd5e1" stroke-width="14"/><path d="M245 145Q250 105 304 106L359 119L355 154L291 164Z" fill="${colors[colorIndex]}"/>
+      : <rect width="600" height="320" fill="#0a1423"/><text x="300" y="35" fill="#fff" font-size="20" text-anchor="middle">${modelType.toUpperCase()} MODEL</text><rect x="230" y="95" width="140" height="140" rx="${modelType==='sphere'?70:8}" fill="${colors[colorIndex]}" stroke="#fff" stroke-width="3"/><text x="300" y="275" fill="#a9bad2" font-size="15" text-anchor="middle">Build &amp; Simulate 3D</text>;
+    const svg = <svg xmlns="http://www.w3.org/2000/svg" width="600" height="320" viewBox="0 0 600 320">${content}</svg>;
+    downloadBlob(new Blob([svg],{type:'image/svg+xml'}),'build-simulate-3d-view.svg'); status('SVG downloaded');
+  }
+  $('buildBtn').addEventListener('click',renderModel);
+  $('resetBtn').addEventListener('click',()=>{angleX=-15;angleY=25;zoom=100;colorIndex=0;parts=[];engineOn=false;$('modelType').value='cube';$('rpm').value=3000;$('gear').value='3';$('length').value=120;$('width').value=60;$('height').value=80;autoRotate=false;$('spinBtn').textContent='▶️ Auto rotate: Off';renderModel();status('Reset complete');});
+  $('addBlock').addEventListener('click',()=>addPart('block'));$('addWheel').addEventListener('click',()=>addPart('wheel'));$('addEngine').addEventListener('click',()=>addPart('engine'));$('addGear').addEventListener('click',()=>addPart('gear'));
+  $('clearParts').addEventListener('click',()=>{parts=[];renderParts();status('Added parts cleared');});
+  $('rotateX').addEventListener('input',e=>{angleX=Number(e.target.value);updateRotation();});
+  $('rotateY').addEventListener('input',e=>{angleY=Number(e.target.value);updateRotation();});
+  $('zoom').addEventListener('input',e=>{zoom=Number(e.target.value);updateRotation();});
+  $('rotateBtn').addEventListener('click',()=>{angleY=(angleY+45)%360;updateRotation();status('Model rotated');});
+  $('colorBtn').addEventListener('click',()=>{colorIndex=(colorIndex+1)%colors.length;renderModel();status('Model color changed');});
+  ['length','width','height','rpm','gear'].forEach(id=>$(id).addEventListener('input',updateMetrics));
+  $('engineBtn').addEventListener('click',()=>{engineOn=!engineOn;updateMetrics();status(engineOn?'Engine simulation started':'Engine stopped');});
+  $('spinBtn').addEventListener('click',()=>{autoRotate=!autoRotate;$('spinBtn').textContent=autoRotate?'Ⅱ Auto rotate: On':'▶️ Auto rotate: Off';status(autoRotate?'Auto rotate enabled':'Auto rotate paused');});
+  $('saveBtn').addEventListener('click',()=>{try{localStorage.setItem('buildSimulate3DProject',JSON.stringify(projectData()));status('Project saved in this browser');}catch(e){status('Browser storage unavailable; download the project instead');}});
+  $('downloadBtn').addEventListener('click',downloadProject);$('exportSvgBtn').addEventListener('click',exportSvg);
+  $('loadFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{loadProject(JSON.parse(await file.text()));}catch(err){status('Could not load file — use a valid project JSON');alert('हा वैध Build & Simulate 3D JSON project नाही.');}e.target.value='';});
+  $('sceneWrap').addEventListener('wheel',e=>{e.preventDefault();zoom=clampNum(zoom+(e.deltaY<0?5:-5),50,160,100);updateRotation();},{passive:false});
+  let dragging=false,startX=0,startY=0,startAngleX=0,startAngleY=0;
+  $('scene').addEventListener('pointerdown',e=>{dragging=true;startX=e.clientX;startY=e.clientY;startAngleX=angleX;startAngleY=angleY;$('scene').setPointerCapture(e.pointerId);});
+  $('scene').addEventListener('pointermove',e=>{if(!dragging)return;angleY=startAngleY+(e.clientX-startX).6;angleX=clampNum(startAngleX-(e.clientY-startY).5,-180,180,-15);updateRotation();});
+  $('scene').addEventListener('pointerup',()=>dragging=false);$('scene').addEventListener('pointercancel',()=>dragging=false);
+  function animate(ts){if(autoRotate && ts-lastFrame>25){angleY=(angleY+.7)%360;updateRotation();lastFrame=ts;}if(engineOn){wheelAngle=(wheelAngle+Number($('rpm').value)/1000)%360;$('wheelRear').style.transform=rotate(${wheelAngle}deg);$('wheelFront').style.transform=rotate(${wheelAngle}deg);}else{$('wheelRear').style.transform='';$('wheelFront').style.transform='';}animationId=requestAnimationFrame(animate);}
+  renderModel();updateMetrics();requestAnimationFrame(animate);
+})();
+</script>
 </body>
 </html>
